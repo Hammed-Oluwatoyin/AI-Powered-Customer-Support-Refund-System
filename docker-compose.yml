@@ -1,0 +1,50 @@
+# One command brings up the whole system: `docker-compose up --build`.
+# Every value has a working default, so no .env file is needed; create one
+# from .env.example to override anything.
+name: refund-system
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-refunds}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-refunds}
+      POSTGRES_DB: ${POSTGRES_DB:-refunds}
+    ports:
+      # Published for running the backend and tests from the host. 5433 avoids
+      # clashing with a locally installed Postgres.
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-refunds}:${POSTGRES_PASSWORD:-refunds}@postgres:5432/${POSTGRES_DB:-refunds}
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5}
+      ADMIN_API_KEY: ${ADMIN_API_KEY:-dev-admin-key-change-me}
+    # Not published: all traffic reaches the backend through nginx.
+    expose:
+      - "3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
