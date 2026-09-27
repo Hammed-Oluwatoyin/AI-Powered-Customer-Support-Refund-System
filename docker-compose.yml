@@ -3,6 +3,8 @@
 # from .env.example to override anything.
 name: refund-system
 
+x-database-url: &database-url postgresql://${POSTGRES_USER:-refunds}:${POSTGRES_PASSWORD:-refunds}@postgres:5432/${POSTGRES_DB:-refunds}
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -22,11 +24,26 @@ services:
       timeout: 3s
       retries: 10
 
+  # Release step (Twelve-Factor V): applies migrations and seeds the demo data,
+  # then exits. The backend only starts once this has succeeded. Re-run it on
+  # its own with `docker compose run --rm migrate`.
+  migrate:
+    build:
+      context: ./backend
+      target: migrate
+    environment:
+      DATABASE_URL: *database-url
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      target: runtime
     environment:
       PORT: 3001
-      DATABASE_URL: postgresql://${POSTGRES_USER:-refunds}:${POSTGRES_PASSWORD:-refunds}@postgres:5432/${POSTGRES_DB:-refunds}
+      DATABASE_URL: *database-url
       LLM_PROVIDER: ${LLM_PROVIDER:-mock}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5}
@@ -35,8 +52,8 @@ services:
     expose:
       - "3001"
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   frontend:
     build: ./frontend
