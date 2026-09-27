@@ -5,6 +5,7 @@ import {
   envValidationSchema,
   type EnvironmentVariables,
 } from './config/env.validation.js';
+import { AdminModule } from './admin/admin.module.js';
 import { HealthModule } from './health/health.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RefundsModule } from './refunds/refunds.module.js';
@@ -35,6 +36,7 @@ import { RefundsModule } from './refunds/refunds.module.js';
     PrismaModule,
     HealthModule,
     RefundsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}
