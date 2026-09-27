@@ -38,3 +38,14 @@ export const OUTCOME_STYLES: Record<
     dot: 'bg-blue-500',
   },
 }
+
+/** Mirrors the backend: escalated or needs-info, and not yet resolved by an admin. */
+export function awaitingReview(result: {
+  decision: Decision | null
+  status: RefundStatus
+}): boolean {
+  return (
+    result.status !== 'RESOLVED_BY_ADMIN' &&
+    (result.decision === 'ESCALATED' || result.status === 'NEEDS_INFO')
+  )
+}
