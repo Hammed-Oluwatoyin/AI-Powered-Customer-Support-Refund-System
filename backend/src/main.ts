@@ -9,7 +9,7 @@ import type { EnvironmentVariables } from './config/env.validation.js';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     // Twelve-Factor XI: structured JSON logs to stdout, no log files.
-    logger: new ConsoleLogger({ json: true }),
+    logger: new ConsoleLogger({ json: true, flattenParams: true }),
   });
   configureApp(app);
 
