@@ -6,6 +6,9 @@ dist/
 coverage/
 *.tsbuildinfo
 
+# Generated Prisma client (created by `prisma generate` on install)
+backend/src/generated/
+
 # Environment: only .env.example is tracked
 .env
 .env.*
