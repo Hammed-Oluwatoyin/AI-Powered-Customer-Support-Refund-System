@@ -1,5 +1,6 @@
 import { Link, Navigate, Route, Routes } from 'react-router'
 import { Layout } from './components/Layout.tsx'
+import { AdminDashboard } from './pages/AdminDashboard.tsx'
 import { ChatPage } from './pages/ChatPage.tsx'
 
 function App() {
@@ -8,6 +9,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/chat" replace />} />
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Layout>
