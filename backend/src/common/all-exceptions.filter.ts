@@ -63,8 +63,27 @@ function describe(exception: unknown): {
         : exception.message;
     return { statusCode: exception.getStatus(), message };
   }
+  // Errors from Express middleware such as the body parser (a 413 for an
+  // oversized body) carry their own 4xx status and a safe message.
+  if (isClientHttpError(exception)) {
+    return {
+      statusCode: exception.status,
+      message: exception.expose
+        ? exception.message
+        : (STATUS_CODES[exception.status] ?? 'Bad request'),
+    };
+  }
   return {
     statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
     message: 'Internal server error',
   };
+}
+
+/** An http-errors style error (used by body-parser) with a 4xx status. */
+function isClientHttpError(
+  exception: unknown,
+): exception is Error & { status: number; expose?: boolean } {
+  if (!(exception instanceof Error) || !('status' in exception)) return false;
+  const { status } = exception;
+  return typeof status === 'number' && status >= 400 && status < 500;
 }

@@ -367,6 +367,19 @@ describe('POST /api/refunds (e2e, mock LLM)', () => {
       });
     });
 
+    it('rejects a body over 16 KB with a 413 in the standard error shape', async () => {
+      const response = await post({
+        email: ADA.email,
+        message: 'x'.repeat(20_000),
+      }).expect(413);
+
+      expect(response.body).toMatchObject({
+        statusCode: 413,
+        error: 'Payload Too Large',
+        path: '/api/refunds',
+      });
+    });
+
     it('returns unknown routes as a 404 in the standard error shape', async () => {
       const response = await request(app.getHttpServer())
         .get('/api/nope')
