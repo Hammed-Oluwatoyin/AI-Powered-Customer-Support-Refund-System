@@ -48,6 +48,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       LLM_MODEL: ${LLM_MODEL:-claude-sonnet-5}
       ADMIN_API_KEY: ${ADMIN_API_KEY:-dev-admin-key-change-me}
+      THROTTLE_TTL_MS: ${THROTTLE_TTL_MS:-60000}
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT:-10}
     # Not published: all traffic reaches the backend through nginx.
     expose:
       - "3001"
