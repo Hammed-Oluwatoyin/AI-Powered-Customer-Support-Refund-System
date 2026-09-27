@@ -21,12 +21,12 @@ describe('GET /api/health (e2e)', () => {
     await app.close();
   });
 
-  it('returns ok', async () => {
+  it('reports the app and database as up', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/health')
       .expect(200);
 
-    expect(response.body).toEqual({ status: 'ok' });
+    expect(response.body).toEqual({ status: 'ok', database: 'up' });
     expect(response.headers['x-powered-by']).toBeUndefined();
   });
 

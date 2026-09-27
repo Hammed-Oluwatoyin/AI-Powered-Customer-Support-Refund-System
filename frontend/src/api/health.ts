@@ -1,5 +1,6 @@
 export interface HealthStatus {
   status: 'ok'
+  database: 'up'
 }
 
 export async function fetchHealth(signal?: AbortSignal): Promise<HealthStatus> {
