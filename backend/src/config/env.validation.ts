@@ -42,5 +42,5 @@ export const envValidationSchema = Joi.object<EnvironmentVariables>({
   ADMIN_API_KEY: Joi.string().min(16).required(),
   // Rate limit for POST /api/refunds, per client IP. Deploy-specific, so config.
   THROTTLE_TTL_MS: Joi.number().integer().positive().default(60_000),
-  THROTTLE_LIMIT: Joi.number().integer().positive().default(10),
+  THROTTLE_LIMIT: Joi.number().integer().positive().default(30),
 });
