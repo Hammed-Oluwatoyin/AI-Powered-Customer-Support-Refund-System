@@ -14,6 +14,8 @@ export interface EnvironmentVariables {
   ANTHROPIC_API_KEY?: string;
   LLM_MODEL: string;
   ADMIN_API_KEY: string;
+  THROTTLE_TTL_MS: number;
+  THROTTLE_LIMIT: number;
 }
 
 /**
@@ -38,4 +40,7 @@ export const envValidationSchema = Joi.object<EnvironmentVariables>({
   }),
   LLM_MODEL: Joi.string().default('claude-sonnet-5'),
   ADMIN_API_KEY: Joi.string().min(16).required(),
+  // Rate limit for POST /api/refunds, per client IP. Deploy-specific, so config.
+  THROTTLE_TTL_MS: Joi.number().integer().positive().default(60_000),
+  THROTTLE_LIMIT: Joi.number().integer().positive().default(10),
 });

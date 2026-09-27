@@ -18,6 +18,8 @@ describe('envValidationSchema', () => {
       PORT: 3001,
       LLM_PROVIDER: 'mock',
       LLM_MODEL: 'claude-sonnet-5',
+      THROTTLE_TTL_MS: 60_000,
+      THROTTLE_LIMIT: 10,
     });
   });
 
@@ -67,6 +69,10 @@ describe('envValidationSchema', () => {
       validate({ ...validEnv, DATABASE_URL: 'mysql://localhost/refunds' })
         .error,
     ).toBeDefined();
+  });
+
+  it('rejects a non-positive throttle limit', () => {
+    expect(validate({ ...validEnv, THROTTLE_LIMIT: '0' }).error).toBeDefined();
   });
 
   it('rejects a missing or short ADMIN_API_KEY', () => {
