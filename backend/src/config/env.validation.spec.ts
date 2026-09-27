@@ -19,7 +19,7 @@ describe('envValidationSchema', () => {
       LLM_PROVIDER: 'mock',
       LLM_MODEL: 'claude-sonnet-5',
       THROTTLE_TTL_MS: 60_000,
-      THROTTLE_LIMIT: 10,
+      THROTTLE_LIMIT: 30,
     });
   });
 
