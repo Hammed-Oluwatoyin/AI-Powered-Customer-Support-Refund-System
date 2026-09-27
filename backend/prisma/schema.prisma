@@ -1,0 +1,118 @@
+// Data model for the refund system. Money is stored as Decimal(10, 2); the
+// rules engine converts to integer cents so it never does float arithmetic.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  PROCESSING
+  SHIPPED
+  DELIVERED
+}
+
+enum Decision {
+  APPROVED
+  DENIED
+  ESCALATED
+}
+
+enum RefundStatus {
+  DECIDED
+  NEEDS_INFO
+  RESOLVED_BY_ADMIN
+}
+
+enum AuditStep {
+  RECEIVED
+  EXTRACTED
+  VERIFIED
+  EVALUATED
+  REPLIED
+  ADMIN_OVERRIDE
+  ERROR
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  orders Order[]
+}
+
+model Order {
+  /// Human-readable ID quoted by customers, e.g. ORD-1001.
+  id          String      @id
+  customerId  String
+  status      OrderStatus
+  orderedAt   DateTime
+  deliveredAt DateTime?
+  total       Decimal     @db.Decimal(10, 2)
+
+  customer       Customer        @relation(fields: [customerId], references: [id])
+  items          OrderItem[]
+  refundRequests RefundRequest[]
+
+  @@index([customerId])
+}
+
+model OrderItem {
+  id          String  @id
+  orderId     String
+  name        String
+  unitPrice   Decimal @db.Decimal(10, 2)
+  quantity    Int
+  isFinalSale Boolean @default(false)
+  refunded    Boolean @default(false)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model RefundRequest {
+  id              String        @id @default(uuid())
+  /// Stored as given, not a foreign key: requests from unknown emails are
+  /// still recorded and audited.
+  customerEmail   String
+  /// Set only once the order has been verified to exist.
+  orderId         String?
+  message         String
+  extractedIntent Json?
+  decision        Decision?
+  status          RefundStatus
+  rulesFired      Json          @default("[]")
+  reasons         Json          @default("[]")
+  refundAmount    Decimal?      @db.Decimal(10, 2)
+  aiReply         String?
+  createdAt       DateTime      @default(now())
+
+  order       Order?       @relation(fields: [orderId], references: [id])
+  auditEvents AuditEvent[]
+
+  @@index([customerEmail, createdAt])
+  @@index([decision])
+  @@index([status])
+}
+
+model AuditEvent {
+  /// Auto-incrementing so events in the same millisecond keep their order.
+  id              Int       @id @default(autoincrement())
+  refundRequestId String
+  step            AuditStep
+  payload         Json
+  createdAt       DateTime  @default(now())
+
+  refundRequest RefundRequest @relation(fields: [refundRequestId], references: [id], onDelete: Cascade)
+
+  @@index([refundRequestId, id])
+}
