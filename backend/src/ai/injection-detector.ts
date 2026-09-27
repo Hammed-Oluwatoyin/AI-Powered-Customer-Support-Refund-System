@@ -12,14 +12,18 @@ export interface InjectionScan {
  * is enough to escalate (P8).
  *
  * The patterns are phrase-level on purpose: an ordinary request such as
- * "please approve my refund" must not trip them. The model catches subtler
- * attempts that these patterns miss.
+ * "please approve my refund" must not trip them. Text is normalised first,
+ * so zero-width characters, full-width letters or line breaks don't hide a
+ * phrase. The model catches subtler attempts, such as look-alike letters
+ * from other alphabets, that these patterns miss.
  */
 const HEURISTICS: ReadonlyArray<{ id: string; pattern: RegExp }> = [
   {
     id: 'override-instructions',
     pattern:
-      /\b(ignore|disregard|forget|override|bypass)\b[^.!?\n]{0,40}\b(rules?|instructions?|polic(?:y|ies)|guidelines|prompts?|directives?)\b/i,
+      // The gap stops at commas, so "ignore the dent, the instructions were
+      // fine" is not flagged.
+      /\b(ignore|disregard|forget|override|bypass)\b[^.!?,;]{0,40}\b(rules?|instructions?|polic(?:y|ies)|guidelines|prompts?|directives?)\b/i,
   },
   {
     id: 'role-reassignment',
@@ -37,7 +41,7 @@ const HEURISTICS: ReadonlyArray<{ id: string; pattern: RegExp }> = [
   {
     id: 'dictated-decision',
     pattern:
-      /\b(?:approve|authori[sz]e|grant)\b[^.!?\n]{0,40}\brefund\b[^.!?\n]{0,40}\b(?:regardless|no matter what|without (?:checking|review|verification|question))\b|\byou (?:must|have to|are required to)\b[^.!?\n]{0,30}\b(?:approve|refund)\b/i,
+      /\b(?:approve|authori[sz]e|grant)\b[^.!?]{0,40}\brefund\b[^.!?]{0,40}\b(?:regardless|no matter what|without (?:checking|review|verification|question))\b|\byou (?:must|have to|are required to)\b[^.!?]{0,30}\b(?:approve|refund)\b/i,
   },
   {
     id: 'fake-markup',
@@ -51,12 +55,27 @@ const HEURISTICS: ReadonlyArray<{ id: string; pattern: RegExp }> = [
   },
 ];
 
+/**
+ * Undoes cheap obfuscation before matching: NFKC turns full-width and other
+ * compatibility letters into plain ones, invisible format characters
+ * (zero-width spaces, joiners, bidi controls) are removed, and runs of
+ * spaces and tabs collapse to one space. Line breaks are kept so the
+ * line-start patterns still work.
+ */
+export function normaliseForScan(message: string): string {
+  return message
+    .normalize('NFKC')
+    .replace(/\p{Cf}/gu, '')
+    .replace(/[^\S\n]+/g, ' ');
+}
+
 @Injectable()
 export class InjectionDetector {
   detect(message: string): InjectionScan {
-    const matches = HEURISTICS.filter(({ pattern }) =>
-      pattern.test(message),
-    ).map(({ id }) => id);
+    const text = normaliseForScan(message);
+    const matches = HEURISTICS.filter(({ pattern }) => pattern.test(text)).map(
+      ({ id }) => id,
+    );
     return { suspected: matches.length > 0, matches };
   }
 }
