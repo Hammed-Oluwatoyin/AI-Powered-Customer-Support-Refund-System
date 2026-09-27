@@ -2,11 +2,17 @@ import { Test } from '@nestjs/testing';
 import { HealthController } from './health.controller.js';
 
 describe('HealthController', () => {
-  it('reports ok', async () => {
+  let controller: HealthController;
+
+  beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [HealthController],
     }).compile();
 
-    expect(moduleRef.get(HealthController).check()).toEqual({ status: 'ok' });
+    controller = moduleRef.get(HealthController);
+  });
+
+  it('reports ok', () => {
+    expect(controller.check()).toEqual({ status: 'ok' });
   });
 });
