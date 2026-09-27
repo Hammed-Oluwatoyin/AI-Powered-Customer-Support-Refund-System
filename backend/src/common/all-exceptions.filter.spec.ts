@@ -50,6 +50,23 @@ describe('AllExceptionsFilter', () => {
     expect(run(new NotFoundException()).body.error).toBe('Not Found');
   });
 
+  it('keeps the 4xx status of middleware errors such as an oversized body', () => {
+    const tooLarge = Object.assign(new Error('request entity too large'), {
+      status: 413,
+      expose: true,
+      type: 'entity.too.large',
+    });
+
+    const { body, status } = run(tooLarge);
+
+    expect(status).toBe(413);
+    expect(body).toMatchObject({
+      statusCode: 413,
+      error: 'Payload Too Large',
+      message: 'request entity too large',
+    });
+  });
+
   it('hides the details of unexpected errors behind a generic 500', () => {
     const { body, status } = run(new Error('password=hunter2 at db.ts:12'));
 
