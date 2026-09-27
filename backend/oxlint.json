@@ -1,11 +1,18 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "oxc", "import"],
+  "plugins": [
+    "typescript",
+    "oxc",
+    "import"
+  ],
   "rules": {
     "typescript/no-explicit-any": "error",
     "typescript/consistent-type-imports": "error"
   },
   "env": {
     "node": true
-  }
+  },
+  "ignorePatterns": [
+    "src/generated/**"
+  ]
 }
