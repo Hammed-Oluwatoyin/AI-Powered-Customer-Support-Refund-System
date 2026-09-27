@@ -14,4 +14,7 @@ export function applyTestEnv(): void {
   process.env.LLM_PROVIDER = 'mock';
   process.env.DATABASE_URL = TEST_DATABASE_URL;
   process.env.ADMIN_API_KEY ??= 'e2e-admin-key-0123456789';
+  // High enough that the scenario suites never hit it; the throttling test
+  // sets its own low limit.
+  process.env.THROTTLE_LIMIT = '1000';
 }
